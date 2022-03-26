@@ -1,5 +1,5 @@
-import csv
 import spacy
+import pandas as pd
 from time import perf_counter
 from datasketch import MinHash, MinHashLSH
 
@@ -17,19 +17,13 @@ lsh_jaccard_dict = {'BuildTime': None, 'QueryTime': None, 'TotalTime': None, 'Du
 # Read file and skip first row
 def load_data(subset):
     print('Reading csv...')
-    data = []
     file = ''
     if subset == 'train':
         file = 'datasets/q2a/corpusTrain.csv'
     elif subset == 'test':
         file = 'datasets/q2a/corpusTest.csv'
-    with open(file, 'r', encoding='utf8') as data_file:
-        reader = csv.reader(data_file, delimiter=',')
-        # Skip header
-        next(reader)
-        for row in reader:
-            data.append(row[-1])
-        return data
+    df = pd.read_csv(file, usecols=['Content'])
+    return df
 
 
 # Naive cosine similarity using SpaCy
@@ -120,11 +114,10 @@ def minhash_lsh(set_1, set_2):
 
 def main():
     # Load data
-    train_set = set(load_data(subset='train'))
-    test_set = set(load_data(subset='test'))
-    print(len(train_set), len(test_set))
+    train_set = load_data(subset='train')
+    test_set = load_data(subset='test')
     # Perform MinHash LSH
-    minhash_neighbors = minhash_lsh(train_set, test_set)
+    minhash_neighbors = minhash_lsh(set(train_set['Content']), set(test_set['Content']))
     print('Duplicates (minHash LSH) found: ', minhash_neighbors)
 
     # Now let's try jaccard similarity
